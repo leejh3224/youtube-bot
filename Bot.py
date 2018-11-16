@@ -3,6 +3,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 
 YOUTUBE_ADDRESS = 'https://www.youtube.com/'
 YOUTUBE_TITLE = 'YouTube'
@@ -20,9 +21,14 @@ class Bot:
 
     def subscribe(self, channelId):
         self.driver.get(f'{YOUTUBE_ADDRESS}/channel/{channelId}')
-        subscribeButton = WebDriverWait(self.driver, 10) \
-            .until(EC.presence_of_element_located((By.TAG_NAME, 'ytd-subscribe-button-renderer')))
-        subscribeButton.click()
+
+        try:
+            subscribeButton = WebDriverWait(self.driver, 10) \
+                .until(EC.presence_of_element_located((By.TAG_NAME, 'ytd-subscribe-button-renderer')))
+            subscribeButton.click()
+        except TimeoutException:
+            print('Error: channel doesn\'t exist!')
+
         return self
 
     def login(self, email, password):
@@ -35,14 +41,17 @@ class Bot:
         try:
             # wait until 'password' element shows up
             passwordInput = WebDriverWait(self.driver, 10) \
-                .until(EC.presence_of_element_located((By.NAME, 'password')))
+            .until(EC.presence_of_element_located((By.NAME, 'password')))
+
             passwordInput.send_keys(password, Keys.RETURN)
 
             # wait until redirect ends so that you can see your profile image on right top corner
             WebDriverWait(self.driver, 10) \
                 .until(EC.presence_of_element_located((By.TAG_NAME, 'ytd-topbar-menu-button-renderer')))
-        finally:
-            return self
+        except TimeoutException:
+            print('Error: wrong email or password!')
+
+        return self
 
     def end(self):
         self.driver.close()
