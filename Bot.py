@@ -19,6 +19,40 @@ class Bot:
         assert YOUTUBE_TITLE in self.driver.title
         return self
 
+    def like(self, videoId, watchFullVideo=False):
+        """
+        Html structure looks like below:
+        yt-icon-button (aria-pressed)
+            > button (aria-label)
+
+        so first get all yt-icon-button tags,
+        and then identify 'like' button by looking at aria-label text.
+        """
+        self.driver.get(f'https://www.youtube.com/watch?v={videoId}')
+
+        try:
+            buttons = WebDriverWait(self.driver, 10) \
+                .until(EC.presence_of_all_elements_located((By.TAG_NAME, 'yt-icon-button')))
+
+            for button in buttons:
+                # html attributes are treated as string, not boolean
+                liked = button.get_attribute('aria-pressed') == 'true'
+                icon_button, = button.find_elements_by_css_selector(
+                    '.yt-icon-button')
+                label = icon_button.get_attribute('aria-label')
+                if label and ('좋아함' in label) and not liked:
+                    button.click()
+                    break
+
+            if watchFullVideo:
+                # wait untile video ends
+                WebDriverWait(self.driver, 10)
+
+        except TimeoutException:
+            print(f'Error: video with id {videoId} doesn\'t exist!')
+
+        return self
+
     def subscribe(self, channelId):
         self.driver.get(f'{YOUTUBE_ADDRESS}/channel/{channelId}')
 
