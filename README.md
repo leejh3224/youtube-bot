@@ -2,5 +2,6 @@
 
 features:
 
-- login and subscribe (implemented)
-- increase view (not yet!)
+- login to google (implemented)
+- subscribe a channel (implemented)
+- like a video (implemented)
