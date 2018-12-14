@@ -40,12 +40,15 @@ class Bot:
                 icon_button, = button.find_elements_by_css_selector(
                     '.yt-icon-button')
                 label = icon_button.get_attribute('aria-label')
+
+                # check button is like button '좋아함' == 'like' in korean
+                # not able to invent better solution than comparing the text in button label
                 if label and ('좋아함' in label) and not liked:
                     button.click()
                     break
 
             if watchFullVideo:
-                # wait untile video ends
+                # TODO: integrate youtube api v3
                 WebDriverWait(self.driver, 10)
 
         except TimeoutException:
