@@ -17,17 +17,7 @@ touch main.py or
 cp example-subscribe.py main.py
 ```
 
-4. If you want to use `like` method, you should change the logic inside.
-   If statement is based on comparing text label to identify whether the button is `like` button or not.
-   So feel free to change '좋아함' into your local langauge.
-
-```python
-if label and ('좋아함' in label) and not liked:
-    button.click()
-    break
-```
-
-5. execute `main.py`.
+4. execute `main.py`.
 
 ```python
 python3 main.py
@@ -35,8 +25,8 @@ python3 main.py
 
 ## features:
 
--   login to google (implemented)
--   subscribe a channel (implemented)
--   like a video (implemented)
+- [x] login to google
+- [x] subscribe a channel
+- [x] like a video
 
 > If you have any issue or code suggestion, please make an issue or pull request.

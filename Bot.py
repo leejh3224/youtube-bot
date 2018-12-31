@@ -20,35 +20,26 @@ class Bot:
         return self
 
     def like(self, videoId, watchFullVideo=False):
-        """
-        Html structure looks like below:
-        yt-icon-button (aria-pressed)
-            > button (aria-label)
+        videoUrl = f'https://www.youtube.com/watch?v={videoId}'
+        likeButtonLocator = 'ytd-toggle-button-renderer #button.ytd-toggle-button-renderer'
+        likeButtonWrapperLocator = 'yt-icon-button#button.style-scope.ytd-toggle-button-renderer'
 
-        so first get all yt-icon-button tags,
-        and then identify 'like' button by looking at aria-label text.
-        """
-        self.driver.get(f'https://www.youtube.com/watch?v={videoId}')
+        self.driver.get(videoUrl)
 
         try:
-            buttons = WebDriverWait(self.driver, 10) \
-                .until(EC.presence_of_all_elements_located((By.TAG_NAME, 'yt-icon-button')))
+            likeButton = WebDriverWait(self.driver, 10) \
+                .until(EC.element_to_be_clickable((By.CSS_SELECTOR, likeButtonLocator)))
+            likeButtonWrapper = self.driver.find_element_by_css_selector(
+                likeButtonWrapperLocator)
 
-            for button in buttons:
-                # html attributes are treated as string, not boolean
-                liked = button.get_attribute('aria-pressed') == 'true'
-                icon_button, = button.find_elements_by_css_selector(
-                    '.yt-icon-button')
-                label = icon_button.get_attribute('aria-label')
+            # aria-pressed attribute is of type string, not boolean
+            liked = likeButtonWrapper.get_attribute('aria-pressed') == 'true'
 
-                # check button is like button '좋아함' == 'like' in korean
-                # not able to invent better solution than comparing the text in button label
-                if label and ('좋아함' in label) and not liked:
-                    button.click()
-                    break
+            if (not liked):
+                likeButton.click()
 
             if watchFullVideo:
-                # TODO: integrate youtube api v3
+                # TODO: integrate youtube api v3 to get video duration
                 WebDriverWait(self.driver, 10)
 
         except TimeoutException:
@@ -57,11 +48,14 @@ class Bot:
         return self
 
     def subscribe(self, channelId):
-        self.driver.get(f'{YOUTUBE_ADDRESS}/channel/{channelId}')
+        channelUrl = f'{YOUTUBE_ADDRESS}/channel/{channelId}'
+        subscribeButtonLocator = (By.TAG_NAME, 'ytd-subscribe-button-renderer')
+
+        self.driver.get(channelUrl)
 
         try:
             subscribeButton = WebDriverWait(self.driver, 10) \
-                .until(EC.presence_of_element_located((By.TAG_NAME, 'ytd-subscribe-button-renderer')))
+                .until(EC.presence_of_element_located(subscribeButtonLocator))
             subscribeButton.click()
         except TimeoutException:
             print('Error: channel doesn\'t exist!')
@@ -69,22 +63,29 @@ class Bot:
         return self
 
     def login(self, email, password):
-        loginButton = self.driver.find_element_by_link_text('로그인')
+        loginButtonLocator = 'ytd-button-renderer.style-blue-text[is-paper-button]'
+        emailInputLocator = 'identifier'
+        passwordInputLocator = (By.NAME, 'password')
+        userProfileLocator = (By.TAG_NAME, 'ytd-topbar-menu-button-renderer')
+
+        # go to login page
+        loginButton = self.driver.find_element_by_css_selector(
+            loginButtonLocator)
         loginButton.click()
 
-        emailInput = self.driver.find_element_by_name('identifier')
+        emailInput = self.driver.find_element_by_name(emailInputLocator)
         emailInput.send_keys(email, Keys.RETURN)
 
         try:
-            # wait until 'password' element shows up
+            # wait until 'password' element is interactable
             passwordInput = WebDriverWait(self.driver, 10) \
-            .until(EC.presence_of_element_located((By.NAME, 'password')))
+                .until(EC.element_to_be_clickable(passwordInputLocator))
 
             passwordInput.send_keys(password, Keys.RETURN)
 
             # wait until redirect ends so that you can see your profile image on right top corner
             WebDriverWait(self.driver, 10) \
-                .until(EC.presence_of_element_located((By.TAG_NAME, 'ytd-topbar-menu-button-renderer')))
+                .until(EC.presence_of_element_located(userProfileLocator))
         except TimeoutException:
             print('Error: wrong email or password!')
 
